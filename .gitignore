@@ -1,0 +1,16 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Generated image files in the static directory
+# We want to keep the directory structure, but not the images themselves.
+static/*/*.png
+
+# IDE and OS specific files
+.vscode/
+.idea/
+.DS_Store

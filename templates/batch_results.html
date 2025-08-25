@@ -1,0 +1,115 @@
+<!-- templates/batch_results.html (Improved Linking) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Results</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f9; margin: 20px; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1200px; margin: auto; }
+        h1, h2 { color: #333; }
+        .summary { display: flex; gap: 40px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+        .filters { display: flex; gap: 20px; margin-bottom: 20px; align-items: center; }
+        .filters input, .filters select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background-color: #f8f9fa; }
+        td a { color: #007bff; text-decoration: none; }
+        .status-success { color: green; }
+        .status-failed { color: red; }
+        .status-has-diff { color: orange; }
+        .url-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Batch Comparison Results</h1>
+        <div class="summary">
+            <div><strong>Batch ID:</strong> {{ batch_id }}</div>
+            <div><strong>Date Processed:</strong> {{ batch_data.start_time }}</div>
+        </div>
+
+        <h2>Filters</h2>
+        <div class="filters">
+            <input type="text" id="urlFilter" placeholder="Filter by URL...">
+            <select id="statusFilter">
+                <option value="all">All Statuses</option>
+                <option value="success">Success</option>
+                <option value="failed">Failed</option>
+                <option value="has_diff">Has Differences</option>
+            </select>
+            <input type="number" id="pixelsFilter" placeholder="Min. different pixels...">
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Old URL</th>
+                    <th>New URL</th>
+                    <th>Mismatched Pixels</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+                {% for result in batch_data.results %}
+                <tr data-pixels="{{ result.mismatched_pixels }}" data-status="{{ result.status.lower() }}">
+                    <td class="url-cell" title="{{ result.url_old }}">{{ result.url_old }}</td>
+                    <td class="url-cell" title="{{ result.url_new }}">{{ result.url_new }}</td>
+                    <td>{{ result.mismatched_pixels if result.mismatched_pixels != -1 else 'N/A' }}</td>
+                    <td>
+                        {% if result.status == 'Success' %}
+                            <span class="status-success">Success</span>
+                            {% if result.mismatched_pixels > 0 %}
+                                <span class="status-has-diff">(Has Diff)</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="status-failed">Failed</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if result.status == 'Success' %}
+                        <!-- FIX: This link is now much cleaner and more robust -->
+                        <a href="{{ url_for('view_result', old=result.paths.old, new=result.paths.new, diff=result.paths.diff, viewport=result.options.viewport, pixels=result.options.pixels) }}" target="_blank">View Diff</a>
+                        {% else %}
+                        N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- JavaScript for filtering is unchanged and correct -->
+    <script>
+        const urlFilter = document.getElementById('urlFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const pixelsFilter = document.getElementById('pixelsFilter');
+        const tableBody = document.getElementById('resultsTableBody');
+        const allRows = Array.from(tableBody.getElementsByTagName('tr'));
+        function applyFilters() {
+            const urlText = urlFilter.value.toLowerCase();
+            const statusValue = statusFilter.value;
+            const pixelsValue = parseInt(pixelsFilter.value, 10) || 0;
+            allRows.forEach(row => {
+                const rowUrl = row.cells[0].textContent.toLowerCase() + row.cells[1].textContent.toLowerCase();
+                const rowPixels = parseInt(row.dataset.pixels, 10);
+                const rowStatus = row.dataset.status;
+                let urlMatch = rowUrl.includes(urlText);
+                let pixelMatch = rowPixels >= pixelsValue;
+                let statusMatch = false;
+                if (statusValue === 'all') { statusMatch = true; } 
+                else if (statusValue === 'success' && rowStatus === 'success') { statusMatch = true; } 
+                else if (statusValue === 'failed' && rowStatus === 'failed') { statusMatch = true; } 
+                else if (statusValue === 'has_diff' && rowStatus === 'success' && rowPixels > 0) { statusMatch = true; }
+                if (urlMatch && pixelMatch && statusMatch) { row.style.display = ''; } 
+                else { row.style.display = 'none'; }
+            });
+        }
+        urlFilter.addEventListener('input', applyFilters);
+        statusFilter.addEventListener('change', applyFilters);
+        pixelsFilter.addEventListener('input', applyFilters);
+    </script>
+</body>
+</html>

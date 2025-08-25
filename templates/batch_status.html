@@ -1,0 +1,60 @@
+<!-- templates/batch_status.html (Updated) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Batch Processing Status</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f4f9; text-align: center; }
+        .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        .progress-bar-container { width: 100%; background-color: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 20px 0; }
+        .progress-bar { width: 0%; height: 30px; background-color: #007bff; text-align: center; line-height: 30px; color: white; transition: width 0.5s ease-in-out; }
+        a.button { display: inline-block; margin-top: 20px; padding: 12px 20px; background-color: #28a745; color: white; text-decoration: none; border-radius: 4px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="status-heading">Processing Batch Job...</h1>
+        <p id="status-text">Please keep this page open. Your comparisons are being generated.</p>
+        <div class="progress-bar-container">
+            <div id="progress-bar" class="progress-bar">0%</div>
+        </div>
+        <p><span id="completed-count">0</span> / <span id="total-count">...</span> comparisons complete.</p>
+        <div id="complete-message" style="display:none;">
+            <h2>Batch Complete!</h2>
+            <!-- CHANGE: This is now a link to the results page -->
+            <a id="results-link" class="button" href="#">View Results</a>
+        </div>
+    </div>
+    <script>
+        const batchId = '{{ batch_id }}';
+        const progressBar = document.getElementById('progress-bar');
+        const statusHeading = document.getElementById('status-heading');
+        const statusText = document.getElementById('status-text');
+        const completedCount = document.getElementById('completed-count');
+        const totalCount = document.getElementById('total-count');
+        const completeMessage = document.getElementById('complete-message');
+        const resultsLink = document.getElementById('results-link');
+
+        async function checkStatus() {
+            const response = await fetch(`/api/batch_status/${batchId}`);
+            const data = await response.json();
+            progressBar.style.width = data.progress + '%';
+            progressBar.textContent = data.progress + '%';
+            completedCount.textContent = data.completed;
+            totalCount.textContent = data.total;
+
+            if (data.status === 'Complete') {
+                statusHeading.textContent = 'Batch Complete!';
+                statusText.style.display = 'none';
+                // Set the correct link and show the button
+                resultsLink.href = `/batch_results/${batchId}`;
+                completeMessage.style.display = 'block';
+                clearInterval(intervalId);
+            }
+        }
+        const intervalId = setInterval(checkStatus, 3000);
+        checkStatus();
+    </script>
+</body>
+</html>

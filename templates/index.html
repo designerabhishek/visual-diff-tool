@@ -1,0 +1,84 @@
+<!-- templates/index.html (Corrected CSS) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visual Diff Tool</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f4f9; margin: 0; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        .tab-buttons { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 20px; }
+        .tab-button { padding: 10px 20px; cursor: pointer; border: none; background: transparent; font-size: 16px; border-bottom: 3px solid transparent; color: #007bff; /* <-- FIX: Added visible color */ }
+        .tab-button.active { border-bottom-color: #007bff; font-weight: bold; color: #333; /* <-- FIX: Added active color */ }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        label { font-weight: bold; margin-bottom: 5px; display: block; }
+        input, select, textarea { display: block; width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        textarea { resize: vertical; min-height: 80px; font-family: monospace; }
+        .help-text { font-size: 0.8em; color: #666; margin-top: -15px; margin-bottom: 20px; }
+        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        .checkbox-wrapper { display: flex; align-items: center; margin-bottom: 20px; }
+        .checkbox-wrapper input { width: auto; margin-bottom: 0; margin-right: 10px; }
+        .checkbox-wrapper label { font-weight: normal; margin-bottom: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="openTab(event, 'single')">Single Comparison</button>
+            <button class="tab-button" onclick="openTab(event, 'batch')">Batch Comparison (CSV)</button>
+        </div>
+        <!-- The rest of your form HTML is unchanged and correct -->
+        <div id="single" class="tab-content active">
+            <form action="/compare" method="post">
+                <label for="url_old">Old URL (Production):</label>
+                <input type="url" id="url_old" name="url_old" required placeholder="https://www.example.com/about">
+                <label for="url_new">New URL (Staging/Migrated):</label>
+                <input type="url" id="url_new" name="url_new" required placeholder="https://new.example.com/about">
+                <label for="viewport_choice">Viewport:</label>
+                <select id="viewport_choice" name="viewport_choice">
+                    <option value="desktop" selected>Desktop (1920x1080)</option>
+                    <option value="tablet">Tablet (768x1024)</option>
+                    <option value="mobile">Mobile (375x812)</option>
+                </select>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="full_page_single" name="full_page" value="true" checked>
+                    <label for="full_page_single">Take full-page screenshots</label>
+                </div>
+                <label for="selectors_to_hide">CSS Selectors to Hide:</label>
+                <textarea id="selectors_to_hide" name="selectors_to_hide" placeholder="#cookie-banner"></textarea>
+                <button type="submit">Generate Comparison</button>
+            </form>
+        </div>
+        <div id="batch" class="tab-content">
+            <form action="/batch_compare" method="post" enctype="multipart/form-data">
+                <label for="csv_file">Upload CSV File:</label>
+                <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                <p class="help-text">CSV format: Two columns with headers "old_url" and "new_url".</p>
+                <label for="viewport_choice_batch">Viewport:</label>
+                <select id="viewport_choice_batch" name="viewport_choice">
+                    <option value="desktop" selected>Desktop (1920x1080)</option>
+                    <option value="tablet">Tablet (768x1024)</option>
+                    <option value="mobile">Mobile (375x812)</option>
+                </select>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="full_page_batch" name="full_page" value="true" checked>
+                    <label for="full_page_batch">Take full-page screenshots</label>
+                </div>
+                <button type="submit">Start Batch Process</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) { tabcontent[i].style.display = "none"; }
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) { tablinks[i].className = tablinks[i].className.replace(" active", ""); }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+    </script>
+</body>
+</html>
